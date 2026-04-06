@@ -28,7 +28,7 @@ constraint-dependencies = [
 
 [tool.uv.workspace]
 members = ["packages/pip/*", "apps/*"]
-exclude = ["packages/pip/tasks_event_sourced"]
+exclude = []
 
 [dependency-groups]
 dev = [
@@ -52,7 +52,7 @@ event_sourced = { workspace = true }
 line-length = 100
 target-version = "py314"
 src = ["apps", "packages/pip"]
-exclude = ["packages/pip/tasks_event_sourced"]
+exclude = []
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -71,9 +71,7 @@ ignore = [
   "RUF100", # Checks for noqa directives that are no longer applicable.
   "TRY003",
 ]
-exclude = [
-  "packages/pip/tasks_event_sourced",
-]
+exclude = []
 
 [tool.ruff.lint.per-file-ignores]
 "packages/pip/*/tests/**" = ["S101", "D", "ANN", "ARG", "PLR2004"]
@@ -90,9 +88,7 @@ include = [
   "apps",
   "packages/pip",
 ]
-exclude = [
-  "packages/pip/tasks_event_sourced/",
-]
+exclude = []
 reportUnusedCallResult = "error"
 reportMissingTypeStubs = "none"
 reportMatchNotExhaustive = "error"
