@@ -1,0 +1,28 @@
+[project]
+name = "event_store_pg"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+  "psycopg[binary,pool]",
+  "asyncio",
+]
+
+[dependency-groups]
+dev = [
+  "pytest-deepassert",
+  "pytest-asyncio",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+#
+# addopts  --vv enables pytest-clarity for a better diff
+#
+addopts = "-s -ra -vv"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+

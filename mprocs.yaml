@@ -1,0 +1,25 @@
+  procs:
+    "---- START ---------":
+      autostart: false
+      shell: echo Nothing
+    PostgreSQL:
+      shell: make start-db
+    "---- WEB ---------":
+      shell: echo Nothing
+      autostart: false
+    "web-dev":
+      shell: make start
+      cwd: app/web_server
+      autostart: false
+    "---- TOOLS ---------":
+      autostart: false
+      shell: echo Nothing
+    clean:
+      shell: make clean
+      autostart: false
+    setup:
+      shell: make setup
+      autostart: false
+    db-migrate:
+      shell: make db-migrate
+      autostart: false

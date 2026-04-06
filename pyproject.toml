@@ -1,0 +1,112 @@
+[project]
+name = "python_event_sourcing"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "freezegun>=1.5.5",
+]
+
+[tool.uv]
+# Centrally manager dependency version using constraint-dependencies.
+# Use constraint-dependencies to lock down the version that will be picked for a 
+# dependency for the entire project, and then in sub project pyproject.toml you
+# simply define the dependences by name and skip the version.
+constraint-dependencies = [
+  "msgspec==0.20.0",
+  "asyncio==4.0.0",
+  "psycopg[binary,pool]==3.3.3",
+  "pyright==1.1.408",
+  "pytest==9.0.2",
+  "ruff==0.15.9",
+  "pydantic==2.12.5",
+  "fastapi== 0.135.1",
+  "uvicorn==0.42.0",
+  "httpx==0.28.1",
+  "pdoc==16.0.0"
+]
+
+
+[tool.uv.workspace]
+members = ["packages/pip/*", "apps/*"]
+exclude = ["packages/pip/tasks_event_sourced"]
+
+[dependency-groups]
+dev = [
+  "pyright",
+  "pytest",
+  "ruff",
+  "pydantic",
+  "fastapi",
+  "uvicorn",
+  "httpx",
+  "pytest-asyncio==1.3.0",
+  # "pytest-deepassert==0.3.0",
+  "pytest-clarity==1.0.1",
+]
+
+[tool.uv.sources]
+logic = { workspace = true }
+event_sourced = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["apps", "packages/pip"]
+exclude = ["packages/pip/tasks_event_sourced"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "D203",
+  "D212",
+  "D101",
+  "D107",
+  "D102",
+  "COM812",
+  "ISC001",
+  "EM101",
+  "I001", # Import block is un-sorted or un-formatted
+  # Enable the below rools only to eaze development
+  "ERA001", # Found commented-out code
+  "RUF100", # Checks for noqa directives that are no longer applicable.
+  "TRY003",
+]
+exclude = [
+  "packages/pip/tasks_event_sourced",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"packages/pip/*/tests/**" = ["S101", "D", "ANN", "ARG", "PLR2004"]
+"apps/*/tests/**" = ["S101", "D", "ANN", "ARG", "PLR2004"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pyright]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+include = [
+  "apps",
+  "packages/pip",
+]
+exclude = [
+  "packages/pip/tasks_event_sourced/",
+]
+reportUnusedCallResult = "error"
+reportMissingTypeStubs = "none"
+reportMatchNotExhaustive = "error"
+venvPath = "."
+venv = ".venv"
+
+extraPaths = [
+  "apps/web_server/src",
+  "packages/pip/logic/src",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["apps", "packages/pip"]
+addopts = "-ra -vv --deepassert"
+
+[tool.mypy]
+enable_error_code = ["exhaustive-match"]

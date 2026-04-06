@@ -1,0 +1,19 @@
+[project]
+name = "event_sourced"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = ["msgspec","pytest-deepassert"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+#
+# addopts  --vv enables pytest-clarity for a better diff
+#
+addopts = "-s -ra -vv"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
