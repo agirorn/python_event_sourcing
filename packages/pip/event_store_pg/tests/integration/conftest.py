@@ -2,10 +2,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
+
     from psycopg import AsyncConnection
+
     from .helper import Pool
-from psycopg_pool import AsyncConnectionPool
 import pytest_asyncio
+from psycopg_pool import AsyncConnectionPool
 
 DSN = "postgresql://admin:admin@localhost:5432/app_test"
 
@@ -14,7 +16,7 @@ type PgPool = AsyncConnectionPool[AsyncConnection]
 
 @pytest_asyncio.fixture(scope="session")
 async def pool() -> AsyncIterator[Pool]:
-    pool: PgPool = AsyncConnectionPool(DSN)
+    pool: PgPool = AsyncConnectionPool(DSN, open=False)
     await pool.open()
     await pool.wait()
     try:
