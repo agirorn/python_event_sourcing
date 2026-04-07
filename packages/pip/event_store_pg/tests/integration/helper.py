@@ -2,12 +2,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from psycopg import AsyncConnection
-from psycopg_pool import AsyncConnectionPool
-from event_sourced.events import TodoAddedData, TodoAdded, TodoRemoved, NoData
-from event_sourced.state import State
-
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID
+
+from event_sourced.events import NoData, TodoAdded, TodoAddedData, TodoRemoved
+from event_sourced.state import State
+from psycopg_pool import AsyncConnectionPool
 
 type Pool = AsyncConnectionPool[AsyncConnection]
 
@@ -35,12 +35,17 @@ def todo_added_event(
     )
 
 
-def todo_removed_event() -> TodoRemoved:
+def todo_removed_event(
+    event_id: UUID | None = None,
+    occ_version: int = 2,
+) -> TodoRemoved:
+    if not event_id:
+        event_id = UUID("1086ada8-9000-4a1f-b621-1a322d21b71c")
     return TodoRemoved(
         aggregate_id="todo-1",
-        event_id=UUID("1086ada8-9000-4a1f-b621-1a322d21b71c"),
+        event_id=event_id,
         version=1,
         occurred_at=datetime(2026, 4, 4, 12, 1, tzinfo=UTC),
-        occ_version=2,
+        occ_version=occ_version,
         data=NoData(),
     )
