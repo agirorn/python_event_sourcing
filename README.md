@@ -14,6 +14,12 @@ __Install [uv]__
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+__Install pnpm__
+
+```shell
+brew install pnpm
+```
+
 __Install mprocs__
 
 ```shell
