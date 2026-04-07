@@ -26,11 +26,15 @@ dev-exec:
 .PHONY: test
 test:
 	make test-unit
+	make test-integration
 
 .PHONY: test-unit
 test-unit:
-	# uv run pytest tests/unit
-	uv run pytest tests/unit
+	echo NOOP
+
+.PHONY: test-integration
+test-integration:
+	uv run pytest tests/integration
 
 .PHONY: lint
 lint:
