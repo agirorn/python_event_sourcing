@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from conftest import PgPool
+    from event_sourced.events import TodoEvent
 from uuid import UUID
 
 import pytest
@@ -19,30 +20,38 @@ async def test_saving_events(pool: PgPool) -> None:
     async with pool.connection() as conn, conn.transaction(), conn.cursor() as cur:
         store = PgBulkEventStore(cur)
         await store.append(new_state(), [todo_added_event(), todo_removed_event()])
+        store = None
     async with pool.connection() as conn, conn.transaction(), conn.cursor() as cur:
-        events = [e async for e in store.load_stream("todo-1")]
-        assert len(events) == 4
+        store = PgBulkEventStore(cur)
+        events = store.load_stream("todo-1")
+        events = [e async for e in events]
+        assert len(events) == 2
         assert events == [todo_added_event(), todo_removed_event()]
 
 
 @pytest.mark.asyncio
 async def test_saving_bulk_events(pool: PgPool) -> None:
-    events_1 = [
-        todo_added_event(event_id=UUID("5a48af7e-565c-402e-afe1-0ceedbe89ee2"), occ_version=1),
-        todo_removed_event(event_id=UUID("6fa020e7-da8f-4e40-a7e2-aea0bf86021f"), occ_version=2),
-    ]
-    events_2 = [
-        todo_added_event(event_id=UUID("638237ec-ab65-4133-bbf3-7aaf4ed87187"), occ_version=3),
-        todo_removed_event(event_id=UUID("28b09023-0b90-424e-b65e-e49f18032a6c"), occ_version=4),
-    ]
+    event_1 = todo_added_event(event_id=UUID("5a48af7e-565c-402e-afe1-0ceedbe89ee2"), occ_version=1)
+    event_2 = todo_removed_event(
+        event_id=UUID("6fa020e7-da8f-4e40-a7e2-aea0bf86021f"), occ_version=2
+    )
+    event_3 = todo_added_event(event_id=UUID("638237ec-ab65-4133-bbf3-7aaf4ed87187"), occ_version=3)
+    event_4 = todo_removed_event(
+        event_id=UUID("28b09023-0b90-424e-b65e-e49f18032a6c"), occ_version=4
+    )
+    events_1: list[TodoEvent] = [event_1, event_2]
+    events_2: list[TodoEvent] = [event_3, event_4]
     async with pool.connection() as conn, conn.transaction(), conn.cursor() as cur:
         store = PgBulkEventStore(cur)
         await store.append(new_state(), events_1)
         await store.append(new_state(), events_2)
+        store = None
     async with pool.connection() as conn, conn.cursor() as cur:
+        store = PgBulkEventStore(cur)
+        # async with pool.connection() as conn, conn.cursor() as cur:
         events = [e async for e in store.load_stream("todo-1")]
         assert len(events) == 4
-        assert events == [todo_added_event(), todo_removed_event()]
+        assert events == [event_1, event_2, event_3, event_4]
 
 
 @pytest.mark.asyncio

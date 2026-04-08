@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from conftest import PgPool
 import pytest
 from event_store_pg import PgEventStore
+from event_sourced.state import State, serialize_state
 from uuid import UUID
 from psycopg.errors import UniqueViolation
 from .helper import new_state, todo_added_event, todo_removed_event
@@ -17,6 +18,23 @@ async def test_saving_events(pool: PgPool) -> None:
     await store.append(new_state(), [todo_added_event(), todo_removed_event()])
     events = [e async for e in store.load_stream("todo-1")]
     assert events == [todo_added_event(), todo_removed_event()]
+
+
+@pytest.mark.asyncio
+async def test_reading_init_event(pool: PgPool) -> None:
+    state = State()
+    async with pool.connection() as conn, conn.cursor() as cur:
+        _ = await cur.execute(
+            """
+            INSERT INTO states (state) VALUES (%s::JSONB)
+            """,
+            [serialize_state(state)],
+        )
+    store = PgEventStore(pool)
+    await store.append(new_state(), [todo_added_event(), todo_removed_event()])
+    events = [e async for e in store.load_stream("todo-1")]
+    assert len(events) == 1
+    # assert events == [todo_added_event(), todo_removed_event()]
 
 
 @pytest.mark.asyncio

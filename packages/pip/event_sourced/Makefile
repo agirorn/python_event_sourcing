@@ -29,7 +29,7 @@ test:
 
 .PHONY: test-unit
 test-unit:
-	# uv run pytest tests/unit
+	# uv run pytest -m focus tests/unit
 	uv run pytest tests/unit
 
 .PHONY: lint

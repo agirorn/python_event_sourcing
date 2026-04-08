@@ -4,6 +4,7 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from event_sourced.events import (
+    TodoInit,
     TodoAdded,
     TodoEvent,
     TodoRemoved,
@@ -60,10 +61,57 @@ class PgBulkEventStore(EventStore):
 
     async def load_stream(self, aggregate_id: str) -> AsyncIterator[TodoEvent]:
         _ = await self.cursor.execute(
-            "select event from events where aggregate_id = %s order by occ_version",
+            """
+            -- SELECT event FROM events WHERE aggregate_id = %s ORDER BY OCC_VERSION
+
+            WITH state AS (
+              SELECT jsonb_build_object(
+                       'data',       row.state,
+                       'name',       'todo_init', -- snapshot
+                       'aggregate_id', aggregate_id,
+                       'event_id', gen_random_uuid(),
+                       'version', 1,
+                       'occurred_at', NOW(),
+                       'occ_version', occ_version
+                     ) AS event,
+                     row.aggregate_id AS aggregate_id,
+                     row.occ_version  AS occ_version
+                FROM (
+                       SELECT state, aggregate_id, occ_version, "saved_at"
+                         FROM states
+                        WHERE aggregate_id = $1
+                        LIMIT 1
+                     ) as row
+            )
+            SELECT result.event
+              FROM (
+                     -- SNAPSHOT ROW (only if state exists)
+                     SELECT state.event
+                          , state.aggregate_id
+                          , state.occ_version
+                       FROM state
+
+                     UNION ALL
+
+                     -- EVENTS NEWER THAN THE SNAPSHOT
+                     -- Or events with occ_version grater 0 snapshot is missing
+                     -- Can occure when snapshots have to be rebuild
+                     SELECT events.event
+                          , events.aggregate_id
+                          , events.occ_version
+                       FROM events events
+                  LEFT JOIN state ON state.aggregate_id = events.aggregate_id
+                      WHERE events.aggregate_id = $1
+                        AND events.occ_version > COALESCE(state.occ_version, 0)
+                   ) AS result
+            ORDER BY occ_version ASC;
+            """,
             (aggregate_id,),
         )
         async for (event,) in self.cursor:
+            print(f"----------------------------------")  # noqa: T201
+            print(f"event: {event}")  # noqa: T201
+            print(f"----------------------------------")  # noqa: T201
             yield deserialize_event_dict(event)
 
     async def append(self, state: State, events: list[TodoEvent]) -> None:
@@ -90,6 +138,8 @@ async def todos_pipline(cur: Cursor, state: State, events: list[TodoEvent]) -> N
     """Updxates the todos table."""
     for event in events:
         match event:
+            case TodoInit():
+                pass
             case TodoAdded():
                 _ = await cur.execute(
                     "INSERT INTO todos (id, message) VALUES (%s, %s)",

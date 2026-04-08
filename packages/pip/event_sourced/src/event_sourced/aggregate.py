@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from .commands import AddTodo, RemoveTodo, TodoCommand
 from .event_store import EventStore
-from .events import TodoAdded, TodoRemoved, TodoAddedData, TodoEvent, NoData
+from .events import TodoInit, TodoAdded, TodoRemoved, TodoAddedData, TodoEvent, NoData
 from .state import State
 from .error import ValidationError
 import uuid
@@ -79,6 +79,8 @@ class Aggregate:
 
     def apply(self, event: TodoEvent) -> None:
         match event:
+            case TodoInit():
+                self.state = event.data
             case TodoAdded():
                 self.state.created = True
                 self.state.aggregate_id = event.aggregate_id

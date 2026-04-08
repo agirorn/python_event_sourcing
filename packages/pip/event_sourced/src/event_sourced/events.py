@@ -8,6 +8,8 @@ import msgspec
 from datetime import datetime  # noqa: TC003 This is a false positive
 from typing import Annotated
 
+from .state import State  # noqa: TC001 This is a false positive
+
 from uuid import UUID  # noqa: TC003 This is a false positive
 
 
@@ -28,6 +30,10 @@ class TodoAddedData(msgspec.Struct):
     message: str = ""
 
 
+class TodoInit(EventBase, tag="todo_init"):
+    data: State
+
+
 class TodoAdded(EventBase, tag="todo_added"):
     data: TodoAddedData
     # event_id: UUID = msgspec.field(default_factory=uuid4)
@@ -38,7 +44,7 @@ class TodoRemoved(EventBase, tag="todo_removed"):
     # event_id: UUID = msgspec.field(default_factory=uuid4)
 
 
-TodoEvent = TodoAdded | TodoRemoved
+TodoEvent = TodoInit | TodoAdded | TodoRemoved
 
 
 def serialize_event(event: TodoEvent) -> str:

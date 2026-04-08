@@ -6,7 +6,10 @@ if TYPE_CHECKING:
     from event_sourced.events import TodoEvent
     from event_sourced.state import State
 
+from datetime import datetime, UTC
 from event_sourced import EventStore
+from event_sourced.events import TodoInit
+from uuid import UUID
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -24,6 +27,18 @@ class InMemoryEventStore(EventStore):
         self.states = {}
 
     async def load_stream(self, aggregate_id: str) -> AsyncIterator[TodoEvent]:
+        if aggregate_id in self.states:
+            init_event = TodoInit(
+                aggregate_id=aggregate_id,
+                event_id=UUID("77c42b42-34c0-44b2-996a-34303c9933cb"),
+                version=1,
+                # occurred_at: datetime
+                occurred_at=datetime.now(UTC),
+                occ_version=0,
+                data=self.states[aggregate_id],
+            )
+            yield init_event
+
         for event in self.events:
             if event.aggregate_id == aggregate_id:
                 yield event
