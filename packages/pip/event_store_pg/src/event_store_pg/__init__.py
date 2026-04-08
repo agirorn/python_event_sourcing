@@ -77,7 +77,7 @@ class PgBulkEventStore(EventStore):
                 FROM (
                        SELECT state, aggregate_id, occ_version, "saved_at"
                          FROM states
-                        WHERE aggregate_id = $1
+                        WHERE aggregate_id = %(aggregate_id)s
                         LIMIT 1
                      ) as row
             )
@@ -99,12 +99,12 @@ class PgBulkEventStore(EventStore):
                           , events.occ_version
                        FROM events events
                   LEFT JOIN state ON state.aggregate_id = events.aggregate_id
-                      WHERE events.aggregate_id = $1
+                      WHERE events.aggregate_id = %(aggregate_id)s
                         AND events.occ_version > COALESCE(state.occ_version, 0)
                    ) AS result
             ORDER BY occ_version ASC;
             """,
-            (aggregate_id,),
+            {"aggregate_id": aggregate_id},
         )
         async for (event,) in self.cursor:
             yield deserialize_event_dict(event)
