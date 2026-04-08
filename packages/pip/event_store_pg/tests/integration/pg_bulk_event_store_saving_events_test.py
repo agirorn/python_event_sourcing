@@ -8,6 +8,8 @@ if TYPE_CHECKING:
 from uuid import UUID
 
 import pytest
+from event_sourced.events import TodoInit
+from event_sourced.state import State
 from psycopg.errors import UniqueViolation
 
 from event_store_pg import PgBulkEventStore
@@ -21,12 +23,33 @@ async def test_saving_events(pool: PgPool) -> None:
         store = PgBulkEventStore(cur)
         await store.append(new_state(), [todo_added_event(), todo_removed_event()])
         store = None
+    async with pool.connection() as conn, conn.cursor() as cur:
+        _ = await cur.execute("TRUNCATE states")
     async with pool.connection() as conn, conn.transaction(), conn.cursor() as cur:
         store = PgBulkEventStore(cur)
         events = store.load_stream("todo-1")
         events = [e async for e in events]
         assert len(events) == 2
         assert events == [todo_added_event(), todo_removed_event()]
+
+
+@pytest.mark.asyncio
+async def test_saving_events_and_up_to_date_state(pool: PgPool) -> None:
+    state = State()
+    state.aggregate_id = "todo-1"
+    state.occ_version = 2
+    async with pool.connection() as conn, conn.transaction(), conn.cursor() as cur:
+        store = PgBulkEventStore(cur)
+        await store.append(state, [todo_added_event(), todo_removed_event()])
+        store = None
+    async with pool.connection() as conn, conn.transaction(), conn.cursor() as cur:
+        store = PgBulkEventStore(cur)
+        events = store.load_stream("todo-1")
+        events = [e async for e in events]
+        assert len(events) == 1
+        event = events[0]
+        assert type(event) is TodoInit
+        assert event.data == state
 
 
 @pytest.mark.asyncio
@@ -46,6 +69,8 @@ async def test_saving_bulk_events(pool: PgPool) -> None:
         await store.append(new_state(), events_1)
         await store.append(new_state(), events_2)
         store = None
+    async with pool.connection() as conn, conn.cursor() as cur:
+        _ = await cur.execute("TRUNCATE states")
     async with pool.connection() as conn, conn.cursor() as cur:
         store = PgBulkEventStore(cur)
         # async with pool.connection() as conn, conn.cursor() as cur:

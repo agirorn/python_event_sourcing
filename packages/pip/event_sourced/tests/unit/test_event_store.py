@@ -6,10 +6,12 @@ if TYPE_CHECKING:
     from event_sourced.events import TodoEvent
     from event_sourced.state import State
 
-from datetime import datetime, UTC
-from event_sourced import EventStore
-from event_sourced.events import TodoInit
+from datetime import UTC, datetime
 from uuid import UUID
+
+from event_sourced.events import TodoInit
+
+from event_sourced import EventStore
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

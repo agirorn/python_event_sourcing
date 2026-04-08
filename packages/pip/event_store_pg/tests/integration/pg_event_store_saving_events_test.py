@@ -4,18 +4,23 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from conftest import PgPool
-import pytest
-from event_store_pg import PgEventStore
-from event_sourced.state import State, serialize_state
 from uuid import UUID
+
+import pytest
+from event_sourced.state import State, serialize_state
 from psycopg.errors import UniqueViolation
-from .helper import new_state, todo_added_event, todo_removed_event
+
+from event_store_pg import PgEventStore
+
+from .helper import new_state, todo_added_event, todo_init_event, todo_removed_event
 
 
 @pytest.mark.asyncio
 async def test_saving_events(pool: PgPool) -> None:
     store = PgEventStore(pool)
     await store.append(new_state(), [todo_added_event(), todo_removed_event()])
+    async with pool.connection() as conn, conn.cursor() as cur:
+        _ = await cur.execute("TRUNCATE states")
     events = [e async for e in store.load_stream("todo-1")]
     assert events == [todo_added_event(), todo_removed_event()]
 
@@ -23,6 +28,8 @@ async def test_saving_events(pool: PgPool) -> None:
 @pytest.mark.asyncio
 async def test_reading_init_event(pool: PgPool) -> None:
     state = State()
+    state.aggregate_id = "todo-1"
+    state.occ_version = 2
     async with pool.connection() as conn, conn.cursor() as cur:
         _ = await cur.execute(
             """
@@ -31,10 +38,15 @@ async def test_reading_init_event(pool: PgPool) -> None:
             [serialize_state(state)],
         )
     store = PgEventStore(pool)
-    await store.append(new_state(), [todo_added_event(), todo_removed_event()])
+    await store.append(state, [todo_added_event(), todo_removed_event()])
+
     events = [e async for e in store.load_stream("todo-1")]
     assert len(events) == 1
-    # assert events == [todo_added_event(), todo_removed_event()]
+    event = events[0]
+    assert event == todo_init_event(
+        event_id=event.event_id,
+        occurred_at=event.occurred_at,
+    )
 
 
 @pytest.mark.asyncio

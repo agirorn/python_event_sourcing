@@ -20,7 +20,7 @@ pythonpath = ["src"]
 #
 # addopts  --vv enables pytest-clarity for a better diff
 #
-addopts = "-s -ra -vv"
+addopts = "-x -s -ra -vv"
 
 [build-system]
 requires = ["hatchling"]

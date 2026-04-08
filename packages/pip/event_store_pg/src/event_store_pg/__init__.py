@@ -4,9 +4,9 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from event_sourced.events import (
-    TodoInit,
     TodoAdded,
     TodoEvent,
+    TodoInit,
     TodoRemoved,
     deserialize_event_dict,
     serialize_event,
@@ -62,8 +62,6 @@ class PgBulkEventStore(EventStore):
     async def load_stream(self, aggregate_id: str) -> AsyncIterator[TodoEvent]:
         _ = await self.cursor.execute(
             """
-            -- SELECT event FROM events WHERE aggregate_id = %s ORDER BY OCC_VERSION
-
             WITH state AS (
               SELECT jsonb_build_object(
                        'data',       row.state,
@@ -109,14 +107,12 @@ class PgBulkEventStore(EventStore):
             (aggregate_id,),
         )
         async for (event,) in self.cursor:
-            print(f"----------------------------------")  # noqa: T201
-            print(f"event: {event}")  # noqa: T201
-            print(f"----------------------------------")  # noqa: T201
             yield deserialize_event_dict(event)
 
     async def append(self, state: State, events: list[TodoEvent]) -> None:
         if not events:
             return
+
         event_rows = [(serialize_event(e),) for e in events]
         _ = await self.cursor.execute(
             """

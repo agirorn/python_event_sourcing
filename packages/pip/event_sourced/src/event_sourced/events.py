@@ -1,16 +1,14 @@
 """Doing this and that."""
 
 from __future__ import annotations
-from typing import Any
+
+from datetime import datetime  # noqa: TC003 This is a false positive
+from typing import Annotated, Any
+from uuid import UUID  # noqa: TC003 This is a false positive
 
 import msgspec
 
-from datetime import datetime  # noqa: TC003 This is a false positive
-from typing import Annotated
-
 from .state import State  # noqa: TC001 This is a false positive
-
-from uuid import UUID  # noqa: TC003 This is a false positive
 
 
 class EventBase(msgspec.Struct, tag_field="name"):
