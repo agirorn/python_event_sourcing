@@ -1,17 +1,17 @@
 """Unit test"""
 
+from uuid import UUID
+
 import pytest
-from event_sourced.events import TodoAdded, TodoAddedData, TodoRemoved, NoData
+from event_sourced.events import NoData, TodoAdded, TodoAddedData, TodoRemoved
 from event_sourced.state import State
-from event_sourced import ValidationError
 from freezegun import freeze_time
 
-from event_sourced import Aggregate
+from event_sourced import Aggregate, ValidationError
 
 from .commands import add_todo_command, remove_todo_command
 from .test_event_store import InMemoryEventStore
 from .test_time import NOW, NOW_STR
-from uuid import UUID
 
 
 @freeze_time(NOW_STR)
@@ -26,7 +26,7 @@ async def test_init_event():
     store.states["todo-1"] = state
     ## Done adding inital state
     aggregate = Aggregate(store)
-    await aggregate.command(remove_todo_command())
+    await aggregate.execute(remove_todo_command())
     store.assert_events_added()
     store.assert_event_count(1)
     store.assert_event_equals(
@@ -47,7 +47,7 @@ async def test_init_event():
 async def test_add_todo():
     store = InMemoryEventStore()
     aggregate = Aggregate(store)
-    await aggregate.command(add_todo_command())
+    await aggregate.execute(add_todo_command())
     store.assert_events_added()
     store.assert_event_count(1)
     store.assert_event_equals(
@@ -70,7 +70,7 @@ async def test_add_todo():
 async def test_add_same_to_twice():
     store = InMemoryEventStore()
     aggregate = Aggregate(store)
-    await aggregate.command(add_todo_command())
+    await aggregate.execute(add_todo_command())
     store.assert_event_count(1)
     store.assert_event_equals(
         1,
@@ -88,7 +88,7 @@ async def test_add_same_to_twice():
     store.start_tracking()
     aggregate = Aggregate(store)
     with pytest.raises(ValidationError, match="Todo already exist"):
-        await aggregate.command(add_todo_command())
+        await aggregate.execute(add_todo_command())
     store.assert_no_events_added()
 
 
@@ -97,8 +97,8 @@ async def test_add_same_to_twice():
 async def test_remove_todo_when_no_todo_exists():
     store = InMemoryEventStore()
     aggregate = Aggregate(store)
-    with pytest.raises(ValidationError, match="Todo does not exisit"):
-        await aggregate.command(remove_todo_command())
+    with pytest.raises(ValidationError, match="Todo does not exists"):
+        await aggregate.execute(remove_todo_command())
     store.assert_no_events_added()
 
 
@@ -107,10 +107,10 @@ async def test_remove_todo_when_no_todo_exists():
 async def test_remove_todo():
     store = InMemoryEventStore()
     aggregate = Aggregate(store)
-    await aggregate.command(add_todo_command())
+    await aggregate.execute(add_todo_command())
     store.start_tracking()
     aggregate = Aggregate(store)
-    await aggregate.command(remove_todo_command())
+    await aggregate.execute(remove_todo_command())
     store.assert_events_added()
     store.assert_event_count(2)
     store.assert_event_equals(
