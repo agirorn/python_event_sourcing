@@ -4,9 +4,9 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from event_sourced.events import (
+    Snapshot,
     TodoAdded,
     TodoEvent,
-    TodoInit,
     TodoRemoved,
     deserialize_event_dict,
     serialize_event,
@@ -65,7 +65,7 @@ class PgBulkEventStore(EventStore):
             WITH state AS (
               SELECT jsonb_build_object(
                        'data',       row.state,
-                       'name',       'todo_init', -- snapshot
+                       'name',       'snapshot', -- snapshot
                        'aggregate_id', aggregate_id,
                        'event_id', gen_random_uuid(),
                        'version', 1,
@@ -134,7 +134,7 @@ async def todos_pipline(cur: Cursor, state: State, events: list[TodoEvent]) -> N
     """Updxates the todos table."""
     for event in events:
         match event:
-            case TodoInit():
+            case Snapshot():
                 pass
             case TodoAdded():
                 _ = await cur.execute(

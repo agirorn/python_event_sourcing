@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 from uuid import UUID
 
 import pytest
-from event_sourced.events import TodoInit
+from event_sourced.events import Snapshot
 from event_sourced.state import State
 from psycopg.errors import UniqueViolation
 
@@ -48,7 +48,7 @@ async def test_saving_events_and_up_to_date_state(pool: PgPool) -> None:
         events = [e async for e in events]
         assert len(events) == 1
         event = events[0]
-        assert type(event) is TodoInit
+        assert type(event) is Snapshot
         assert event.data == state
 
 

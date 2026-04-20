@@ -1,18 +1,19 @@
 """Test file."""
 
+from datetime import UTC, datetime
+from uuid import UUID
+
 from event_sourced.events import (
-    serialize_event,
-    deserialize_event,
-    TodoEvent,
+    NoData,
+    Snapshot,
     TodoAdded,
     TodoAddedData,
+    TodoEvent,
     TodoRemoved,
-    NoData,
-    TodoInit,
+    deserialize_event,
+    serialize_event,
 )
 from event_sourced.state import State
-from datetime import datetime, UTC
-from uuid import UUID
 
 
 def compact_json(json_str: str) -> str:
@@ -20,7 +21,7 @@ def compact_json(json_str: str) -> str:
 
 
 def test_todo_init():
-    event: TodoEvent = TodoInit(
+    event: TodoEvent = Snapshot(
         aggregate_id="todo-1",
         version=1,
         event_id=UUID("2ea565bd-bf1d-408e-bbc5-c3638d8e06b6"),
@@ -30,7 +31,7 @@ def test_todo_init():
     )
     expected_json = compact_json("""
         {
-            "name":"todo_init",
+            "name":"snapshot",
             "aggregate_id":"todo-1",
             "event_id":"2ea565bd-bf1d-408e-bbc5-c3638d8e06b6",
             "version":1,

@@ -16,7 +16,7 @@ from .test_time import NOW, NOW_STR
 
 @freeze_time(NOW_STR)
 @pytest.mark.asyncio
-async def test_init_event():
+async def test_snapshot_event():
     store = InMemoryEventStore()
     ## Adding inital state
     state = State()

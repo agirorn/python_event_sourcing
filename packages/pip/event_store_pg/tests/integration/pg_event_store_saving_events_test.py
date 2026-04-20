@@ -12,7 +12,7 @@ from psycopg.errors import UniqueViolation
 
 from event_store_pg import PgEventStore
 
-from .helper import new_state, todo_added_event, todo_init_event, todo_removed_event
+from .helper import new_state, snapshot_event, todo_added_event, todo_removed_event
 
 
 @pytest.mark.asyncio
@@ -26,7 +26,7 @@ async def test_saving_events(pool: PgPool) -> None:
 
 
 @pytest.mark.asyncio
-async def test_reading_init_event(pool: PgPool) -> None:
+async def test_reading_snapshot_event(pool: PgPool) -> None:
     state = State()
     state.aggregate_id = "todo-1"
     state.occ_version = 2
@@ -43,7 +43,7 @@ async def test_reading_init_event(pool: PgPool) -> None:
     events = [e async for e in store.load_stream("todo-1")]
     assert len(events) == 1
     event = events[0]
-    assert event == todo_init_event(
+    assert event == snapshot_event(
         event_id=event.event_id,
         occurred_at=event.occurred_at,
     )

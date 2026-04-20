@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 from datetime import UTC, datetime
 from uuid import UUID
 
-from event_sourced.events import TodoInit
+from event_sourced.events import Snapshot
 
 from event_sourced import EventStore
 
@@ -30,7 +30,7 @@ class InMemoryEventStore(EventStore):
 
     async def load_stream(self, aggregate_id: str) -> AsyncIterator[TodoEvent]:
         if aggregate_id in self.states:
-            init_event = TodoInit(
+            event = Snapshot(
                 aggregate_id=aggregate_id,
                 event_id=UUID("77c42b42-34c0-44b2-996a-34303c9933cb"),
                 version=1,
@@ -39,7 +39,7 @@ class InMemoryEventStore(EventStore):
                 occ_version=0,
                 data=self.states[aggregate_id],
             )
-            yield init_event
+            yield event
 
         for event in self.events:
             if event.aggregate_id == aggregate_id:

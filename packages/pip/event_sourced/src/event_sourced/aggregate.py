@@ -9,7 +9,7 @@ from uuid import UUID
 from .commands import AddTodo, RemoveTodo, TodoCommand
 from .error import ValidationError
 from .event_store import EventStore
-from .events import NoData, TodoAdded, TodoAddedData, TodoEvent, TodoInit, TodoRemoved
+from .events import NoData, Snapshot, TodoAdded, TodoAddedData, TodoEvent, TodoRemoved
 from .state import State
 
 if TYPE_CHECKING:
@@ -133,7 +133,7 @@ class Aggregate(BaseAggregate):
 
     def apply(self, event: TodoEvent) -> None:
         match event:
-            case TodoInit():
+            case Snapshot():
                 self.state = event.data
             case TodoAdded():
                 self.state.created = True

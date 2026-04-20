@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 from datetime import UTC, datetime
 from uuid import UUID
 
-from event_sourced.events import NoData, TodoAdded, TodoAddedData, TodoInit, TodoRemoved
+from event_sourced.events import NoData, Snapshot, TodoAdded, TodoAddedData, TodoRemoved
 from event_sourced.state import State
 from psycopg_pool import AsyncConnectionPool
 
@@ -18,10 +18,10 @@ def new_state() -> State:
     return state
 
 
-def todo_init_event(
+def snapshot_event(
     event_id: UUID | None = None,
     occurred_at: datetime | None = None,
-) -> TodoInit:
+) -> Snapshot:
     if not event_id:
         event_id = UUID("81d618bd-1b67-4727-9926-249032042668")
 
@@ -30,7 +30,7 @@ def todo_init_event(
     state = State()
     state.occ_version = 2
     state.aggregate_id = "todo-1"
-    return TodoInit(
+    return Snapshot(
         aggregate_id="todo-1",
         event_id=event_id,
         version=1,

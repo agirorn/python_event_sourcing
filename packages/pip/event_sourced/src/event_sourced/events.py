@@ -28,7 +28,7 @@ class TodoAddedData(msgspec.Struct):
     message: str = ""
 
 
-class TodoInit(EventBase, tag="todo_init"):
+class Snapshot(EventBase, tag="snapshot"):
     data: State
 
 
@@ -42,7 +42,7 @@ class TodoRemoved(EventBase, tag="todo_removed"):
     # event_id: UUID = msgspec.field(default_factory=uuid4)
 
 
-TodoEvent = TodoInit | TodoAdded | TodoRemoved
+TodoEvent = Snapshot | TodoAdded | TodoRemoved
 
 
 def serialize_event(event: TodoEvent) -> str:
